@@ -1,0 +1,9 @@
+[
+  { "id": "qf1", "etapa": "Cuartos de Final", "orden": 1, "equipo1": "Francia", "equipo2": "Marruecos", "depende1": null, "depende2": null, "fecha": "2026-07-10", "sede": "Gillette Stadium, Foxborough" },
+  { "id": "qf2", "etapa": "Cuartos de Final", "orden": 2, "equipo1": "España", "equipo2": "Bélgica", "depende1": null, "depende2": null, "fecha": "2026-07-11", "sede": "SoFi Stadium, Inglewood" },
+  { "id": "qf3", "etapa": "Cuartos de Final", "orden": 3, "equipo1": "Noruega", "equipo2": "Inglaterra", "depende1": null, "depende2": null, "fecha": "2026-07-10", "sede": "Hard Rock Stadium, Miami Gardens" },
+  { "id": "qf4", "etapa": "Cuartos de Final", "orden": 4, "equipo1": "Argentina", "equipo2": "Suiza", "depende1": null, "depende2": null, "fecha": "2026-07-11", "sede": "Arrowhead Stadium, Kansas City" },
+  { "id": "sf1", "etapa": "Semifinal", "orden": 5, "equipo1": null, "equipo2": null, "depende1": "qf1", "depende2": "qf2", "fecha": "2026-07-14", "sede": "AT&T Stadium, Arlington" },
+  { "id": "sf2", "etapa": "Semifinal", "orden": 6, "equipo1": null, "equipo2": null, "depende1": "qf3", "depende2": "qf4", "fecha": "2026-07-15", "sede": "Mercedes-Benz Stadium, Atlanta" },
+  { "id": "final", "etapa": "Final", "orden": 7, "equipo1": null, "equipo2": null, "depende1": "sf1", "depende2": "sf2", "fecha": "2026-07-19", "sede": "MetLife Stadium, East Rutherford" }
+]

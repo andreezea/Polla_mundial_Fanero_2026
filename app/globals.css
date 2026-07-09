@@ -1,0 +1,74 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: #0a1a30;
+  --foreground: #eef2f8;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background-color: #0a1a30;
+  background-image:
+    radial-gradient(circle at 15% 0%, rgba(27, 79, 134, 0.35), transparent 45%),
+    radial-gradient(circle at 85% 10%, rgba(212, 175, 55, 0.12), transparent 40%);
+  color: var(--foreground);
+  min-height: 100vh;
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: #0f2540;
+}
+::-webkit-scrollbar-thumb {
+  background: #22406a;
+  border-radius: 8px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #d4af37;
+}
+
+@layer components {
+  .card {
+    @apply bg-surface-card border border-surface-border rounded-xl shadow-card;
+  }
+
+  .kpi-card {
+    @apply card p-5 flex flex-col gap-1 border-l-4 border-l-gold transition-transform hover:-translate-y-0.5;
+  }
+
+  .btn-primary {
+    @apply inline-flex items-center justify-center gap-2 rounded-lg bg-gold px-4 py-2.5 font-semibold text-navy-800 shadow-gold transition hover:brightness-110 active:scale-[0.98] disabled:opacity-50 disabled:pointer-events-none;
+  }
+
+  .btn-secondary {
+    @apply inline-flex items-center justify-center gap-2 rounded-lg border border-surface-border bg-surface-light px-4 py-2.5 font-semibold text-slate-100 transition hover:border-gold hover:text-gold active:scale-[0.98];
+  }
+
+  .input-field {
+    @apply w-full rounded-lg border border-surface-border bg-navy-800 px-3 py-2 text-sm text-slate-100 placeholder:text-slate-500 focus:border-gold focus:outline-none focus:ring-1 focus:ring-gold;
+  }
+
+  .section-title {
+    @apply text-xl font-bold text-white border-b-[3px] border-gold inline-block pb-1;
+  }
+
+  .badge-gold {
+    @apply inline-flex items-center gap-1 rounded-full bg-gold/15 px-3 py-1 text-xs font-semibold text-gold border border-gold/40;
+  }
+
+  .table-header {
+    @apply text-left text-xs font-semibold uppercase tracking-wider text-slate-400 px-4 py-3;
+  }
+
+  .table-cell {
+    @apply px-4 py-3 text-sm text-slate-200 border-t border-surface-border;
+  }
+}

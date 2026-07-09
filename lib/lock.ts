@@ -12,6 +12,12 @@ import { Partido, PicksMap } from "./types";
 
 export const MINUTOS_BLOQUEO = 5;
 
+// Fecha límite fija para elegir Campeón / Subcampeón (pick del slot "final"),
+// independiente de la hora real de la Gran Final: se cierra antes para que
+// nadie elija su campeón ya sabiendo los resultados de semifinales.
+// 10/07/2026, 12:00 pm hora Perú (UTC-5).
+export const FECHA_LIMITE_CAMPEON = "2026-07-10T12:00:00-05:00";
+
 /** true si, a la hora indicada (por defecto ahora), el partido ya no admite cambios. */
 export function estaBloqueado(partido: Partido | undefined | null, ahora: Date = new Date()): boolean {
   if (!partido?.horaInicio) return false;
@@ -19,6 +25,18 @@ export function estaBloqueado(partido: Partido | undefined | null, ahora: Date =
   if (Number.isNaN(inicio)) return false;
   const limite = inicio - MINUTOS_BLOQUEO * 60 * 1000;
   return ahora.getTime() >= limite;
+}
+
+/** true si ya pasó la fecha límite fija para elegir Campeón / Subcampeón. */
+export function haPasadoLimiteCampeon(ahora: Date = new Date()): boolean {
+  return ahora.getTime() >= new Date(FECHA_LIMITE_CAMPEON).getTime();
+}
+
+/** true si, para este partido puntual, ya no se admiten cambios (incluye el límite especial del slot "final"). */
+export function bloqueoEfectivo(partido: Partido | undefined | null, ahora: Date = new Date()): boolean {
+  if (estaBloqueado(partido, ahora)) return true;
+  if (partido?.id === "final" && haPasadoLimiteCampeon(ahora)) return true;
+  return false;
 }
 
 /**
@@ -35,7 +53,7 @@ export function sanearPicksBloqueados(
 ): PicksMap {
   const resultado: PicksMap = { ...picksNuevos };
   for (const partido of partidos) {
-    if (!estaBloqueado(partido, ahora)) continue;
+    if (!bloqueoEfectivo(partido, ahora)) continue;
     const previo = picksAnteriores[partido.id];
     if (previo) {
       resultado[partido.id] = previo;

@@ -15,6 +15,8 @@ interface MatchCardProps {
   deshabilitado?: boolean;
   /** true si ya pasó el límite de tiempo (5 min antes del inicio): se ve el pick pero no se puede tocar. */
   bloqueado?: boolean;
+  /** Mensaje personalizado para el aviso de bloqueo (opcional). */
+  mensajeBloqueo?: string;
   colorAcento?: "gold" | "navy";
 }
 
@@ -28,6 +30,7 @@ export default function MatchCard({
   onChange,
   deshabilitado = false,
   bloqueado = false,
+  mensajeBloqueo,
   colorAcento = "gold",
 }: MatchCardProps) {
   const equiposDefinidos = equipo1 !== "Por definir" && equipo2 !== "Por definir";
@@ -47,7 +50,7 @@ export default function MatchCard({
 
       {bloqueado && equiposDefinidos && (
         <div className="mb-3 flex items-center gap-1.5 rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-2 text-xs font-semibold text-red-300">
-          🔒 Cerrado — este partido ya comenzó o está por comenzar. Ya no se puede modificar.
+          🔒 {mensajeBloqueo ?? "Cerrado — este partido ya comenzó o está por comenzar. Ya no se puede modificar."}
         </div>
       )}
 

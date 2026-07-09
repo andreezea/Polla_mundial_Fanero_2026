@@ -5,6 +5,8 @@ import { NextRequest, NextResponse } from "next/server";
 //   - /resultados            (pantalla para cargar resultados oficiales)
 //   - /api/resultados/*      (API que guarda esos resultados)
 //   - /api/export            (descarga del Excel con ranking + predicciones)
+//   - /admin/*               (pantalla para corregir predicciones de participantes)
+//   - /api/admin/*           (API que guarda esas correcciones)
 //
 // El usuario y la contraseña se leen de las variables de entorno ADMIN_USER
 // y ADMIN_PASSWORD (configúralas en Vercel). Si no están configuradas, se
@@ -40,5 +42,11 @@ export function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/resultados/:path*", "/api/resultados/:path*", "/api/export/:path*"],
+  matcher: [
+    "/resultados/:path*",
+    "/api/resultados/:path*",
+    "/api/export/:path*",
+    "/admin/:path*",
+    "/api/admin/:path*",
+  ],
 };

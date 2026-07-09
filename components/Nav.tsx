@@ -2,13 +2,14 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, ClipboardList, ShieldCheck, Trophy, BarChart3, Database, Lock } from "lucide-react";
+import { LayoutDashboard, ClipboardList, ShieldCheck, Trophy, BarChart3, Database, Lock, UserCog } from "lucide-react";
 import clsx from "clsx";
 
 const LINKS = [
   { href: "/", label: "Dashboard", icon: LayoutDashboard },
   { href: "/predicciones", label: "Registrar Predicción", icon: ClipboardList },
   { href: "/resultados", label: "Resultados Reales", icon: ShieldCheck, admin: true },
+  { href: "/admin/predicciones", label: "Editar Predicciones", icon: UserCog, admin: true },
   { href: "/ranking", label: "Ranking", icon: Trophy },
   { href: "/visualizaciones", label: "Visualizaciones", icon: BarChart3 },
   { href: "/api/export", label: "Exportar Excel", icon: Database, external: true, admin: true },

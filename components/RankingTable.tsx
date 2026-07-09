@@ -55,6 +55,7 @@ export default function RankingTable({ ranking, mostrarFiltro = true }: RankingT
               >
                 <td className="table-cell font-bold text-gold">{r.posicion}</td>
                 <td className="table-cell font-semibold text-white">
+                  {r.emoji && <span className="mr-1.5">{r.emoji}</span>}
                   {r.usuario}
                   {r.posicion === 1 && <span className="badge-gold ml-2">🏆 Líder</span>}
                 </td>

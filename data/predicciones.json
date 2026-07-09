@@ -1,6 +1,7 @@
 [
   {
     "usuario": "Andrea",
+    "emoji": "🔥",
     "timestamp": "2026-07-01T09:12:00.000Z",
     "picks": {
       "qf1": { "ganador": "Francia", "golesLocal": 2, "golesVisitante": 1 },
@@ -14,6 +15,7 @@
   },
   {
     "usuario": "Carlos",
+    "emoji": "🦁",
     "timestamp": "2026-07-01T10:45:00.000Z",
     "picks": {
       "qf1": { "ganador": "Marruecos", "golesLocal": 0, "golesVisitante": 1 },
@@ -27,6 +29,7 @@
   },
   {
     "usuario": "María",
+    "emoji": "👑",
     "timestamp": "2026-07-01T14:20:00.000Z",
     "picks": {
       "qf1": { "ganador": "Francia", "golesLocal": 3, "golesVisitante": 0 },
@@ -40,6 +43,7 @@
   },
   {
     "usuario": "Luis",
+    "emoji": "🚀",
     "timestamp": "2026-07-02T08:05:00.000Z",
     "picks": {
       "qf1": { "ganador": "Marruecos", "golesLocal": 1, "golesVisitante": 2 },
@@ -53,6 +57,7 @@
   },
   {
     "usuario": "Sofía",
+    "emoji": "⭐",
     "timestamp": "2026-07-02T11:30:00.000Z",
     "picks": {
       "qf1": { "ganador": "Francia", "golesLocal": 1, "golesVisitante": 0 },
@@ -66,6 +71,7 @@
   },
   {
     "usuario": "Diego",
+    "emoji": "😎",
     "timestamp": "2026-07-02T19:15:00.000Z",
     "picks": {
       "qf1": { "ganador": "Marruecos", "golesLocal": 0, "golesVisitante": 1 },
@@ -79,6 +85,7 @@
   },
   {
     "usuario": "Valentina",
+    "emoji": "🍀",
     "timestamp": "2026-07-03T07:40:00.000Z",
     "picks": {
       "qf1": { "ganador": "Francia", "golesLocal": 2, "golesVisitante": 0 },
@@ -92,6 +99,7 @@
   },
   {
     "usuario": "Pedro",
+    "emoji": "🎯",
     "timestamp": "2026-07-03T16:55:00.000Z",
     "picks": {
       "qf1": { "ganador": "Marruecos", "golesLocal": 0, "golesVisitante": 2 },

@@ -30,7 +30,13 @@ export default function RankingPage() {
             <h2 className="mb-3 text-sm font-semibold uppercase tracking-wider text-slate-300">🥇🥈🥉 Podio</h2>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               {ranking.slice(0, 3).map((r) => (
-                <PodiumCard key={r.usuario} posicion={r.posicion} usuario={r.usuario} puntaje={r.puntajeTotal} />
+                <PodiumCard
+                  key={r.usuario}
+                  posicion={r.posicion}
+                  usuario={r.usuario}
+                  emoji={r.emoji}
+                  puntaje={r.puntajeTotal}
+                />
               ))}
             </div>
           </div>
@@ -42,7 +48,9 @@ export default function RankingPage() {
               Leaderboard Completo
             </h2>
             <RankingBarChart
-              data={ranking.map((r) => ({ usuario: r.usuario, puntaje: r.puntajeTotal })).reverse()}
+              data={ranking
+                .map((r) => ({ usuario: `${r.emoji ? r.emoji + " " : ""}${r.usuario}`, puntaje: r.puntajeTotal }))
+                .reverse()}
             />
           </div>
         </>

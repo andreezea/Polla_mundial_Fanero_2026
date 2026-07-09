@@ -129,6 +129,7 @@ export function construirRanking(predicciones: Prediccion[], resultado: Resultad
     const det = calcularPuntajeUsuario(pred, resultado, 3);
     return {
       usuario: pred.usuario,
+      emoji: pred.emoji ?? null,
       puntajeTotal: det.puntaje,
       aciertosGanador: det.aciertosGanador,
       aciertosMarcador: det.aciertosMarcador,

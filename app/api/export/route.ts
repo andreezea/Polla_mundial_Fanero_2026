@@ -15,6 +15,7 @@ export async function GET() {
     ranking.map((r) => ({
       Posición: r.posicion,
       Usuario: r.usuario,
+      Emoji: r.emoji ?? "",
       "Puntaje Total": r.puntajeTotal,
       "Ganadores Acertados": r.aciertosGanador,
       "Marcadores Exactos": r.aciertosMarcador,
@@ -27,6 +28,7 @@ export async function GET() {
   const prediccionesSheet = XLSX.utils.json_to_sheet(
     predicciones.map((p) => ({
       Usuario: p.usuario,
+      Emoji: p.emoji ?? "",
       Fecha: p.timestamp,
       ...Object.fromEntries(
         Object.entries(p.picks).flatMap(([slot, pick]) => [

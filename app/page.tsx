@@ -45,7 +45,12 @@ export default function DashboardPage() {
           </div>
 
           {lider && (
-            <LeaderBanner usuario={lider.usuario} puntaje={lider.puntajeTotal} pctAciertos={lider.pctAciertos} />
+            <LeaderBanner
+              usuario={lider.usuario}
+              emoji={lider.emoji}
+              puntaje={lider.puntajeTotal}
+              pctAciertos={lider.pctAciertos}
+            />
           )}
 
           <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
@@ -56,7 +61,7 @@ export default function DashboardPage() {
               <RankingBarChart
                 data={ranking
                   .slice(0, 5)
-                  .map((r) => ({ usuario: r.usuario, puntaje: r.puntajeTotal }))
+                  .map((r) => ({ usuario: `${r.emoji ? r.emoji + " " : ""}${r.usuario}`, puntaje: r.puntajeTotal }))
                   .reverse()}
               />
             </div>

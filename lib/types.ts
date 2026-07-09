@@ -33,6 +33,7 @@ export type PicksMap = Partial<Record<SlotId, SlotPick>>;
 
 export interface Prediccion {
   usuario: string;
+  emoji?: string | null;
   timestamp: string;
   picks: PicksMap;
 }
@@ -44,6 +45,7 @@ export interface Resultado {
 export interface RankingRow {
   posicion: number;
   usuario: string;
+  emoji?: string | null;
   puntajeTotal: number;
   aciertosGanador: number;
   aciertosMarcador: number;
@@ -51,3 +53,10 @@ export interface RankingRow {
   campeonAcertado: boolean;
   pctAciertos: number;
 }
+
+// Emojis sugeridos para que cada jugador personalice su nombre en el ranking.
+export const EMOJIS_SUGERIDOS: string[] = [
+  "⚽", "🏆", "🔥", "⭐", "🎯", "🍀", "👑", "🥇",
+  "😎", "🦁", "🐯", "🦅", "🐺", "🐉", "🚀", "🎉",
+  "💪", "🧠", "🎲", "🃏", "🥳", "😈", "🤝", "🐐",
+];

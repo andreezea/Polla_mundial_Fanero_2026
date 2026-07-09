@@ -1,6 +1,7 @@
 import { getPartidos, getPredicciones, getResultado } from "@/lib/data";
 import { calcularPuntajeUsuario } from "@/lib/scoring";
 import { SLOT_IDS } from "@/lib/types";
+import { conBandera } from "@/lib/flags";
 import VisualizacionesClient from "@/components/VisualizacionesClient";
 
 export const dynamic = "force-dynamic";
@@ -10,7 +11,10 @@ export default function VisualizacionesPage() {
   const predicciones = getPredicciones();
   const resultado = getResultado();
 
-  const usuarios = predicciones.map((p) => p.usuario);
+  const etiqueta = (p: { usuario: string; emoji?: string | null }) =>
+    p.emoji ? `${p.emoji} ${p.usuario}` : p.usuario;
+
+  const usuarios = predicciones.map((p) => etiqueta(p));
 
   const etiquetasEtapa: Record<1 | 2 | 3, string> = {
     1: "Tras Cuartos",
@@ -22,14 +26,17 @@ export default function VisualizacionesPage() {
     const fila: Record<string, string | number> = { etapa: etiquetasEtapa[etapaN] };
     predicciones.forEach((pred) => {
       const det = calcularPuntajeUsuario(pred, resultado, etapaN);
-      fila[pred.usuario] = det.puntaje;
+      fila[etiqueta(pred)] = det.puntaje;
     });
     return fila;
   });
 
   const distribuciones = SLOT_IDS.map((slotId) => {
     const partido = partidos.find((p) => p.id === slotId)!;
-    const titulo = partido.equipo1 && partido.equipo2 ? `${partido.equipo1} vs ${partido.equipo2}` : slotId.toUpperCase();
+    const titulo =
+      partido.equipo1 && partido.equipo2
+        ? `${conBandera(partido.equipo1)} vs ${conBandera(partido.equipo2)}`
+        : slotId.toUpperCase();
 
     const conteo: Record<string, number> = {};
     predicciones.forEach((pred) => {
@@ -41,7 +48,7 @@ export default function VisualizacionesPage() {
       slotId,
       etapa: partido.etapa,
       titulo,
-      data: Object.entries(conteo).map(([equipo, predicciones]) => ({ equipo, predicciones })),
+      data: Object.entries(conteo).map(([equipo, predicciones]) => ({ equipo: conBandera(equipo), predicciones })),
     };
   }).filter((d) => d.data.length > 0);
 

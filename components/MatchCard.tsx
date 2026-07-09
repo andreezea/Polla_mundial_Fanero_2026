@@ -2,6 +2,7 @@
 
 import clsx from "clsx";
 import { SlotPick } from "@/lib/types";
+import { conBandera } from "@/lib/flags";
 
 interface MatchCardProps {
   titulo: string;
@@ -68,7 +69,7 @@ export default function MatchCard({
                     : "border-surface-border text-slate-200 hover:border-slate-500"
                 )}
               >
-                <span>{equipo}</span>
+                <span>{conBandera(equipo)}</span>
                 {activo && <span>✅</span>}
               </button>
             );
@@ -89,6 +90,7 @@ export default function MatchCard({
                 })
               }
               placeholder={equipo1}
+              title={equipo1}
               className="input-field w-20 text-center"
             />
             <span className="text-slate-500">—</span>

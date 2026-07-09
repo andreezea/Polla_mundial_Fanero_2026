@@ -3,12 +3,12 @@ import { getResultado, guardarResultado } from "@/lib/data";
 import { Resultado } from "@/lib/types";
 
 export async function GET() {
-  const resultado = getResultado();
+  const resultado = await getResultado();
   return NextResponse.json(resultado);
 }
 
 export async function POST(request: Request) {
   const body = (await request.json()) as Resultado;
-  const guardado = guardarResultado(body);
+  const guardado = await guardarResultado(body);
   return NextResponse.json(guardado);
 }

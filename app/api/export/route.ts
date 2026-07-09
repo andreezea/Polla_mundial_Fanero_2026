@@ -7,8 +7,8 @@ import { construirRanking } from "@/lib/scoring";
 export const dynamic = "force-dynamic";
 
 export async function GET() {
-  const predicciones = getPredicciones();
-  const resultado = getResultado();
+  const predicciones = await getPredicciones();
+  const resultado = await getResultado();
   const ranking = construirRanking(predicciones, resultado);
 
   const rankingSheet = XLSX.utils.json_to_sheet(

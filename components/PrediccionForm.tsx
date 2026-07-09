@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import * as XLSX from "xlsx";
 import { Partido, PicksMap, Prediccion, SlotId, SLOT_IDS, EMOJIS_SUGERIDOS } from "@/lib/types";
 import { equiposDeSlot } from "@/lib/bracket";
+import { estaBloqueado } from "@/lib/lock";
 import MatchCard from "@/components/MatchCard";
 import { Save, Upload, Loader2, Info } from "lucide-react";
 
@@ -182,6 +183,7 @@ export default function PrediccionForm({ partidos, predicciones }: PrediccionFor
         sede={partido?.sede}
         pick={picks[slot] ?? { ganador: null, golesLocal: null, golesVisitante: null }}
         onChange={(p) => actualizarPick(slot, p)}
+        bloqueado={estaBloqueado(partido)}
         colorAcento={colorAcento}
       />
     );
@@ -245,6 +247,12 @@ export default function PrediccionForm({ partidos, predicciones }: PrediccionFor
         <Info size={16} className="shrink-0" />
         No es necesario completar todos los partidos ahora. Puedes registrarte solo con tu nombre, guardar, y volver
         más tarde (con el mismo nombre) para completar o modificar tu predicción.
+      </div>
+
+      <div className="rounded-lg border border-red-500/30 bg-red-500/5 px-4 py-3 text-sm text-red-300 flex items-center gap-2">
+        <Info size={16} className="shrink-0" />
+        Cada partido se bloquea automáticamente 5 minutos antes de su hora de inicio: después de ese momento ya no
+        se puede elegir ni cambiar el ganador ni el marcador de ese partido.
       </div>
 
       <div>

@@ -9,9 +9,9 @@ import Link from "next/link";
 
 export const dynamic = "force-dynamic";
 
-export default function DashboardPage() {
-  const predicciones = getPredicciones();
-  const resultado = getResultado();
+export default async function DashboardPage() {
+  const predicciones = await getPredicciones();
+  const resultado = await getResultado();
   const ranking = construirRanking(predicciones, resultado);
 
   const totalJugadores = ranking.length;

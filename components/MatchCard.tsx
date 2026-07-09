@@ -2,7 +2,7 @@
 
 import clsx from "clsx";
 import { SlotPick } from "@/lib/types";
-import { conBandera } from "@/lib/flags";
+import FlagIcon from "@/components/FlagIcon";
 
 interface MatchCardProps {
   titulo: string;
@@ -13,6 +13,8 @@ interface MatchCardProps {
   pick: SlotPick;
   onChange: (pick: SlotPick) => void;
   deshabilitado?: boolean;
+  /** true si ya pasó el límite de tiempo (5 min antes del inicio): se ve el pick pero no se puede tocar. */
+  bloqueado?: boolean;
   colorAcento?: "gold" | "navy";
 }
 
@@ -25,9 +27,12 @@ export default function MatchCard({
   pick,
   onChange,
   deshabilitado = false,
+  bloqueado = false,
   colorAcento = "gold",
 }: MatchCardProps) {
-  const seleccionable = equipo1 !== "Por definir" && equipo2 !== "Por definir" && !deshabilitado;
+  const equiposDefinidos = equipo1 !== "Por definir" && equipo2 !== "Por definir";
+  const seleccionable = equiposDefinidos && !deshabilitado;
+  const inputsDeshabilitados = deshabilitado || bloqueado;
 
   return (
     <div className="card p-4 sm:p-5">
@@ -39,6 +44,12 @@ export default function MatchCard({
           </span>
         )}
       </div>
+
+      {bloqueado && equiposDefinidos && (
+        <div className="mb-3 flex items-center gap-1.5 rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-2 text-xs font-semibold text-red-300">
+          🔒 Cerrado — este partido ya comenzó o está por comenzar. Ya no se puede modificar.
+        </div>
+      )}
 
       {!seleccionable ? (
         <p className="text-sm text-slate-500 italic">
@@ -52,7 +63,7 @@ export default function MatchCard({
               <button
                 key={equipo}
                 type="button"
-                disabled={deshabilitado}
+                disabled={inputsDeshabilitados}
                 onClick={() =>
                   onChange({
                     ganador: equipo,
@@ -69,7 +80,10 @@ export default function MatchCard({
                     : "border-surface-border text-slate-200 hover:border-slate-500"
                 )}
               >
-                <span>{conBandera(equipo)}</span>
+                <span className="flex items-center gap-2">
+                  <FlagIcon equipo={equipo} size={22} />
+                  {equipo}
+                </span>
                 {activo && <span>✅</span>}
               </button>
             );
@@ -81,7 +95,7 @@ export default function MatchCard({
               type="number"
               min={0}
               max={15}
-              disabled={deshabilitado}
+              disabled={inputsDeshabilitados}
               value={pick.golesLocal ?? ""}
               onChange={(e) =>
                 onChange({
@@ -98,7 +112,7 @@ export default function MatchCard({
               type="number"
               min={0}
               max={15}
-              disabled={deshabilitado}
+              disabled={inputsDeshabilitados}
               value={pick.golesVisitante ?? ""}
               onChange={(e) =>
                 onChange({

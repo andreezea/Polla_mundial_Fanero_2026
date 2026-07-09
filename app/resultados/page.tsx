@@ -3,9 +3,9 @@ import ResultadosForm from "@/components/ResultadosForm";
 
 export const dynamic = "force-dynamic";
 
-export default function ResultadosPage() {
+export default async function ResultadosPage() {
   const partidos = getPartidos();
-  const resultado = getResultado();
+  const resultado = await getResultado();
 
   return (
     <div className="flex flex-col gap-4">

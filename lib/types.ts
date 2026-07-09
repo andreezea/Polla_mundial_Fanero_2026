@@ -21,6 +21,9 @@ export interface Partido {
   depende2: SlotId | null;
   fecha: string;
   sede: string;
+  /** Fecha/hora ISO 8601 con zona horaria del inicio real del partido.
+   *  Se usa para bloquear predicciones 5 minutos antes del pitazo inicial. */
+  horaInicio?: string | null;
 }
 
 export interface SlotPick {

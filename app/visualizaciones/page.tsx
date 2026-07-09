@@ -6,10 +6,10 @@ import VisualizacionesClient from "@/components/VisualizacionesClient";
 
 export const dynamic = "force-dynamic";
 
-export default function VisualizacionesPage() {
+export default async function VisualizacionesPage() {
   const partidos = getPartidos();
-  const predicciones = getPredicciones();
-  const resultado = getResultado();
+  const predicciones = await getPredicciones();
+  const resultado = await getResultado();
 
   const etiqueta = (p: { usuario: string; emoji?: string | null }) =>
     p.emoji ? `${p.emoji} ${p.usuario}` : p.usuario;

@@ -3,9 +3,9 @@ import PrediccionForm from "@/components/PrediccionForm";
 
 export const dynamic = "force-dynamic";
 
-export default function PrediccionesPage() {
+export default async function PrediccionesPage() {
   const partidos = getPartidos();
-  const predicciones = getPredicciones();
+  const predicciones = await getPredicciones();
 
   return (
     <div className="flex flex-col gap-4">

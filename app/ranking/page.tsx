@@ -7,9 +7,9 @@ import { Download } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
-export default function RankingPage() {
-  const predicciones = getPredicciones();
-  const resultado = getResultado();
+export default async function RankingPage() {
+  const predicciones = await getPredicciones();
+  const resultado = await getResultado();
   const ranking = construirRanking(predicciones, resultado);
 
   return (

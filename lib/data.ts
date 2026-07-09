@@ -1,88 +1,124 @@
 // =============================================================================
-// Capa de acceso a datos (JSON como base de datos ligera).
+// Capa de acceso a datos.
 //
-// IMPORTANTE — Limitación conocida en Vercel:
-// El sistema de archivos de las funciones serverless de Vercel es de solo
-// lectura en producción, excepto el directorio efímero /tmp. Por eso, en
-// producción (VERCEL=1) las escrituras se hacen en /tmp, que NO persiste
-// entre invocaciones frías ni se comparte entre instancias/regiones.
-// Es decir: funciona para una demo o sesión corta, pero para una polla real
-// con muchos usuarios en producción se recomienda migrar esta capa a una
-// base de datos persistente (Vercel KV, Vercel Postgres, Supabase, etc.).
-// Todo el resto de la app solo llama a las funciones de este archivo, así
-// que migrar de backend implica reescribir únicamente este módulo.
+// PARTIDOS: es un fixture fijo (no lo edita nadie en producción), así que
+// siempre se lee del JSON versionado en el repo (data/partidos.json).
+//
+// PREDICCIONES / RESULTADOS: necesitan persistir de verdad entre visitas.
+//   - Si hay credenciales de Upstash Redis configuradas (variables de
+//     entorno UPSTASH_REDIS_REST_URL / UPSTASH_REDIS_REST_TOKEN, o las
+//     equivalentes KV_REST_API_URL / KV_REST_API_TOKEN que usa la
+//     integración de Vercel Marketplace) se usa Redis. Esto es OBLIGATORIO
+//     en producción/Vercel: el sistema de archivos de las funciones
+//     serverless es de solo lectura fuera de /tmp, y /tmp NO persiste entre
+//     invocaciones ni se comparte entre instancias — por eso los registros
+//     nuevos "desaparecían" antes de este cambio.
+//   - Si no hay credenciales (ej. estás probando en tu computador sin una
+//     cuenta de Upstash) se usa un archivo JSON local en /data, solo para
+//     desarrollo. En ese modo los datos NO persisten en Vercel.
 // =============================================================================
 
 import fs from "fs";
 import path from "path";
+import { Redis } from "@upstash/redis";
 import { Partido, Prediccion, Resultado } from "./types";
 
 const SEED_DIR = path.join(process.cwd(), "data");
-const RUNTIME_DIR = process.env.VERCEL ? path.join("/tmp", "polla-mundial-2026-data") : SEED_DIR;
 
-function ensureRuntimeFile(filename: string) {
-  if (RUNTIME_DIR === SEED_DIR) return; // local/dev: escribimos directo sobre /data
-  if (!fs.existsSync(RUNTIME_DIR)) fs.mkdirSync(RUNTIME_DIR, { recursive: true });
-  const target = path.join(RUNTIME_DIR, filename);
-  if (!fs.existsSync(target)) {
-    const seed = path.join(SEED_DIR, filename);
-    fs.copyFileSync(seed, target);
-  }
-}
-
-function readJSON<T>(filename: string): T {
-  ensureRuntimeFile(filename);
-  const file = path.join(RUNTIME_DIR, filename);
-  const raw = fs.readFileSync(file, "utf-8");
-  return JSON.parse(raw) as T;
-}
-
-function writeJSON<T>(filename: string, data: T): void {
-  ensureRuntimeFile(filename);
-  const file = path.join(RUNTIME_DIR, filename);
-  fs.writeFileSync(file, JSON.stringify(data, null, 2), "utf-8");
+function leerSeed<T>(filename: string): T {
+  const file = path.join(SEED_DIR, filename);
+  return JSON.parse(fs.readFileSync(file, "utf-8")) as T;
 }
 
 // ---------------------------------------------------------------------------
 // Partidos (fixture fijo, solo lectura)
 // ---------------------------------------------------------------------------
 export function getPartidos(): Partido[] {
-  return readJSON<Partido[]>("partidos.json");
+  return leerSeed<Partido[]>("partidos.json");
+}
+
+// ---------------------------------------------------------------------------
+// Cliente de Redis (si hay credenciales configuradas)
+// ---------------------------------------------------------------------------
+const REDIS_URL = process.env.UPSTASH_REDIS_REST_URL || process.env.KV_REST_API_URL;
+const REDIS_TOKEN = process.env.UPSTASH_REDIS_REST_TOKEN || process.env.KV_REST_API_TOKEN;
+
+const redis = REDIS_URL && REDIS_TOKEN ? new Redis({ url: REDIS_URL, token: REDIS_TOKEN }) : null;
+
+const KEY_PREDICCIONES = "polla2026:predicciones";
+const KEY_RESULTADO = "polla2026:resultado";
+
+// ---------------------------------------------------------------------------
+// Respaldo por archivo JSON (solo para desarrollo local sin Redis)
+// ---------------------------------------------------------------------------
+const RUNTIME_DIR = process.env.VERCEL ? path.join("/tmp", "polla-mundial-2026-data") : SEED_DIR;
+
+function ensureRuntimeFile(filename: string) {
+  if (RUNTIME_DIR === SEED_DIR) return;
+  if (!fs.existsSync(RUNTIME_DIR)) fs.mkdirSync(RUNTIME_DIR, { recursive: true });
+  const target = path.join(RUNTIME_DIR, filename);
+  if (!fs.existsSync(target)) fs.copyFileSync(path.join(SEED_DIR, filename), target);
+}
+
+function readJSONFallback<T>(filename: string): T {
+  ensureRuntimeFile(filename);
+  return JSON.parse(fs.readFileSync(path.join(RUNTIME_DIR, filename), "utf-8")) as T;
+}
+
+function writeJSONFallback<T>(filename: string, data: T): void {
+  ensureRuntimeFile(filename);
+  fs.writeFileSync(path.join(RUNTIME_DIR, filename), JSON.stringify(data, null, 2), "utf-8");
 }
 
 // ---------------------------------------------------------------------------
 // Predicciones
 // ---------------------------------------------------------------------------
-export function getPredicciones(): Prediccion[] {
-  return readJSON<Prediccion[]>("predicciones.json");
+export async function getPredicciones(): Promise<Prediccion[]> {
+  if (redis) {
+    const data = await redis.get<Prediccion[]>(KEY_PREDICCIONES);
+    return data ?? [];
+  }
+  return readJSONFallback<Prediccion[]>("predicciones.json");
 }
 
-export function upsertPrediccion(pred: Prediccion): Prediccion[] {
-  const actuales = getPredicciones();
+export async function upsertPrediccion(pred: Prediccion): Promise<Prediccion[]> {
+  const actuales = await getPredicciones();
   const nombreNormalizado = pred.usuario.trim().toLowerCase();
   const filtradas = actuales.filter((p) => p.usuario.trim().toLowerCase() !== nombreNormalizado);
   const nuevas = [...filtradas, pred];
-  writeJSON("predicciones.json", nuevas);
+  if (redis) await redis.set(KEY_PREDICCIONES, nuevas);
+  else writeJSONFallback("predicciones.json", nuevas);
   return nuevas;
 }
 
-export function importarPredicciones(nuevas: Prediccion[]): Prediccion[] {
-  const actuales = getPredicciones();
+export async function importarPredicciones(nuevas: Prediccion[]): Promise<Prediccion[]> {
+  const actuales = await getPredicciones();
   const nombresNuevos = new Set(nuevas.map((p) => p.usuario.trim().toLowerCase()));
   const conservadas = actuales.filter((p) => !nombresNuevos.has(p.usuario.trim().toLowerCase()));
   const resultado = [...conservadas, ...nuevas];
-  writeJSON("predicciones.json", resultado);
+  if (redis) await redis.set(KEY_PREDICCIONES, resultado);
+  else writeJSONFallback("predicciones.json", resultado);
   return resultado;
 }
 
 // ---------------------------------------------------------------------------
 // Resultados oficiales
 // ---------------------------------------------------------------------------
-export function getResultado(): Resultado {
-  return readJSON<Resultado>("resultados.json");
+export async function getResultado(): Promise<Resultado> {
+  if (redis) {
+    const data = await redis.get<Resultado>(KEY_RESULTADO);
+    return data ?? { picks: {} };
+  }
+  return readJSONFallback<Resultado>("resultados.json");
 }
 
-export function guardarResultado(resultado: Resultado): Resultado {
-  writeJSON("resultados.json", resultado);
+export async function guardarResultado(resultado: Resultado): Promise<Resultado> {
+  if (redis) await redis.set(KEY_RESULTADO, resultado);
+  else writeJSONFallback("resultados.json", resultado);
   return resultado;
+}
+
+/** true si la app está usando Redis (persistencia real) en vez del respaldo JSON local. */
+export function usandoRedis(): boolean {
+  return redis !== null;
 }

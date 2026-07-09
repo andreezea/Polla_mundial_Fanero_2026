@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getPartidos, getPredicciones, upsertPrediccion, importarPredicciones } from "@/lib/data";
-import { sanearPicksBloqueados } from "@/lib/lock";
+import { sanearPicksBloqueados, sanearCampeonBloqueado } from "@/lib/lock";
 import { Prediccion } from "@/lib/types";
 
 export async function GET() {
@@ -32,7 +32,12 @@ export async function POST(request: Request) {
   const anterior = actuales.find((p) => p.usuario.trim().toLowerCase() === pred.usuario.trim().toLowerCase());
   pred.picks = sanearPicksBloqueados(pred.picks ?? {}, anterior?.picks ?? {}, partidos);
 
-  pred.timestamp = new Date().toISOString();
-  const nuevas = await upsertPrediccion(pred);
+  // Igual que arriba, pero para Campeón/Subcampeón: si ya pasó la fecha
+  // límite fija, se ignora lo que venga del cliente y se conserva lo
+  // guardado anteriormente (no se puede saltar llamando a la API directo).
+  const predSaneada = sanearCampeonBloqueado(pred, anterior);
+
+  predSaneada.timestamp = new Date().toISOString();
+  const nuevas = await upsertPrediccion(predSaneada);
   return NextResponse.json(nuevas);
 }

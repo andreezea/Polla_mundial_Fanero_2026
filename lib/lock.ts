@@ -8,7 +8,7 @@
 // se pueda saltar el bloqueo llamando directamente a la API.
 // =============================================================================
 
-import { Partido, PicksMap } from "./types";
+import { Partido, PicksMap, Prediccion } from "./types";
 
 export const MINUTOS_BLOQUEO = 5;
 
@@ -62,4 +62,23 @@ export function sanearPicksBloqueados(
     }
   }
   return resultado;
+}
+
+/**
+ * Server-side: si ya pasó la fecha límite para elegir Campeón/Subcampeón,
+ * ignora lo que venga del cliente para esos dos campos y conserva lo que
+ * ya estaba guardado (igual que sanearPicksBloqueados, pero para estos
+ * campos independientes del bracket).
+ */
+export function sanearCampeonBloqueado(
+  pred: Prediccion,
+  anterior: Prediccion | undefined,
+  ahora: Date = new Date()
+): Prediccion {
+  if (!haPasadoLimiteCampeon(ahora)) return pred;
+  return {
+    ...pred,
+    campeon: anterior?.campeon ?? null,
+    subcampeon: anterior?.subcampeon ?? null,
+  };
 }

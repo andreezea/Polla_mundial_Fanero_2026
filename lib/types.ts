@@ -39,6 +39,9 @@ export interface Prediccion {
   emoji?: string | null;
   timestamp: string;
   picks: PicksMap;
+  /** Campeón / Subcampeón elegidos directamente (no dependen de completar cuartos/semis). */
+  campeon?: string | null;
+  subcampeon?: string | null;
 }
 
 export interface Resultado {

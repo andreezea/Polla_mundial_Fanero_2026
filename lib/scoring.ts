@@ -114,7 +114,10 @@ export function calcularPuntajeUsuario(
 
   if (hastaEtapa >= 3) {
     const realCampeon = resultado.picks.final?.ganador;
-    const predCampeon = pred.picks.final?.ganador;
+    // El campo campeon (elegido libremente, sin depender del bracket) manda;
+    // si una predicción antigua no lo tiene, usamos el ganador de la Gran
+    // Final del bracket como respaldo (compatibilidad con datos previos).
+    const predCampeon = pred.campeon ?? pred.picks.final?.ganador ?? null;
     if (realCampeon && predCampeon && realCampeon === predCampeon) {
       detalle.campeonAcertado = true;
       detalle.puntaje += PTS_CAMPEON;

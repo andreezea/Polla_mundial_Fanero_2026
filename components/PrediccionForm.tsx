@@ -28,6 +28,8 @@ export default function PrediccionForm({ partidos, predicciones }: PrediccionFor
   const [nombre, setNombre] = useState("");
   const [emoji, setEmoji] = useState<string | null>(null);
   const [picks, setPicks] = useState<PicksMap>({});
+  const [campeon, setCampeon] = useState<string | null>(null);
+  const [subcampeon, setSubcampeon] = useState<string | null>(null);
   const [guardando, setGuardando] = useState(false);
   const [mensaje, setMensaje] = useState<{ tipo: "ok" | "error" | "info"; texto: string } | null>(null);
   const [yaExisteOtro, setYaExisteOtro] = useState(false);
@@ -38,6 +40,34 @@ export default function PrediccionForm({ partidos, predicciones }: PrediccionFor
     return map;
   }, [partidos]);
 
+  // Equipos que juegan cuartos de final: son los únicos que pueden llegar a
+  // ser Campeón/Subcampeón, así que son las opciones para elegirlos — sin
+  // necesidad de completar cuartos ni semifinales primero.
+  const equiposCuartos = useMemo(() => {
+    const nombres: string[] = [];
+    partidos
+      .filter((p) => p.etapa === "Cuartos de Final")
+      .forEach((p) => {
+        if (p.equipo1) nombres.push(p.equipo1);
+        if (p.equipo2) nombres.push(p.equipo2);
+      });
+    return nombres;
+  }, [partidos]);
+
+  const limiteCampeonPasado = haPasadoLimiteCampeon();
+
+  function elegirCampeon(equipo: string) {
+    if (limiteCampeonPasado) return;
+    setCampeon((prev) => (prev === equipo ? null : equipo));
+    setSubcampeon((prev) => (prev === equipo ? null : prev));
+  }
+
+  function elegirSubcampeon(equipo: string) {
+    if (limiteCampeonPasado) return;
+    setSubcampeon((prev) => (prev === equipo ? null : equipo));
+    setCampeon((prev) => (prev === equipo ? null : prev));
+  }
+
   function buscarPrediccionExistente(nombreBuscado: string): Prediccion | undefined {
     const normalizado = nombreBuscado.trim().toLowerCase();
     if (!normalizado) return undefined;
@@ -47,6 +77,11 @@ export default function PrediccionForm({ partidos, predicciones }: PrediccionFor
   function cargarPrediccion(encontrada: Prediccion) {
     setPicks(encontrada.picks ?? {});
     setEmoji(encontrada.emoji ?? null);
+    // Compatibilidad: predicciones guardadas antes de este cambio no tenían
+    // el campo "campeon" propio, así que usamos el ganador de la Gran Final
+    // del bracket (si lo habían elegido) como respaldo.
+    setCampeon(encontrada.campeon ?? encontrada.picks.final?.ganador ?? null);
+    setSubcampeon(encontrada.subcampeon ?? null);
     const faltan = SLOT_IDS.filter((s) => !encontrada.picks[s]?.ganador).length;
     setMensaje({
       tipo: "info",
@@ -64,7 +99,7 @@ export default function PrediccionForm({ partidos, predicciones }: PrediccionFor
       setYaExisteOtro(false);
       return;
     }
-    const formularioVacio = Object.keys(picks).length === 0 && !emoji;
+    const formularioVacio = Object.keys(picks).length === 0 && !emoji && !campeon && !subcampeon;
     if (formularioVacio) {
       // Primera vez que escribe este nombre en esta visita: cargamos su avance guardado.
       cargarPrediccion(encontrada);
@@ -119,6 +154,8 @@ export default function PrediccionForm({ partidos, predicciones }: PrediccionFor
         emoji,
         timestamp: new Date().toISOString(),
         picks,
+        campeon,
+        subcampeon,
       };
       const res = await fetch("/api/predicciones", {
         method: "POST",
@@ -194,19 +231,6 @@ export default function PrediccionForm({ partidos, predicciones }: PrediccionFor
     }
   }
 
-  // Campeón = ganador que elijas en la Gran Final. Subcampeón = el otro finalista
-  // (el que pierde la final en tu predicción). No son campos aparte: se derivan
-  // directamente de tu elección en la Gran Final para que no haya inconsistencias.
-  const finalEquipos = useMemo(() => equiposDeSlot("final", partidos, picks), [partidos, picks]);
-  const campeon = picks.final?.ganador ?? null;
-  const subcampeon = useMemo(() => {
-    if (!campeon) return null;
-    const [e1, e2] = finalEquipos;
-    if (e1 === campeon) return e2 !== "Por definir" ? e2 : null;
-    if (e2 === campeon) return e1 !== "Por definir" ? e1 : null;
-    return null;
-  }, [campeon, finalEquipos]);
-
   const resumenPicks = useMemo(
     () =>
       SLOT_IDS.map((slot) => ({
@@ -216,14 +240,11 @@ export default function PrediccionForm({ partidos, predicciones }: PrediccionFor
       })),
     [picks]
   );
-  const hayAlgunPick = SLOT_IDS.some((s) => picks[s]?.ganador);
+  const hayAlgunPick = SLOT_IDS.some((s) => picks[s]?.ganador) || !!campeon || !!subcampeon;
 
   function renderSlot(slot: SlotId, colorAcento: "gold" | "navy" = "gold") {
     const [e1, e2] = equiposDeSlot(slot, partidos, picks);
     const partido = partidoPorId[slot];
-    const esFinal = slot === "final";
-    const limiteCampeonPasado = esFinal && haPasadoLimiteCampeon();
-    const bloqueado = estaBloqueado(partido) || limiteCampeonPasado;
     return (
       <MatchCard
         key={slot}
@@ -234,12 +255,7 @@ export default function PrediccionForm({ partidos, predicciones }: PrediccionFor
         sede={partido?.sede}
         pick={picks[slot] ?? { ganador: null, golesLocal: null, golesVisitante: null }}
         onChange={(p) => actualizarPick(slot, p)}
-        bloqueado={bloqueado}
-        mensajeBloqueo={
-          limiteCampeonPasado
-            ? "Cerrado — venció el plazo para elegir Campeón y Subcampeón (10/07/2026, 12:00 pm hora Perú). Ya no se puede modificar."
-            : undefined
-        }
+        bloqueado={estaBloqueado(partido)}
         colorAcento={colorAcento}
       />
     );
@@ -315,6 +331,83 @@ export default function PrediccionForm({ partidos, predicciones }: PrediccionFor
         </div>
       </div>
 
+      <div className="card p-5 border border-gold/30">
+        <h3 className="mb-1 text-sm font-bold uppercase tracking-wider text-gold">🏆 Campeón y Subcampeón del Mundial</h3>
+        <p className="mb-1 text-xs text-slate-500">
+          Elige directamente quién crees que será el Campeón y el Subcampeón — no necesitas completar cuartos ni
+          semifinales primero.
+        </p>
+        <p className="mb-3 text-xs font-semibold text-red-300">
+          ⏰ Tienes hasta el 10/07/2026, 12:00 pm (hora Perú) para elegir o cambiar esta predicción.
+        </p>
+
+        {limiteCampeonPasado && (
+          <div className="mb-3 flex items-center gap-1.5 rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-2 text-xs font-semibold text-red-300">
+            🔒 Cerrado — venció el plazo para elegir Campeón y Subcampeón. Ya no se puede modificar.
+          </div>
+        )}
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+          <div>
+            <span className="mb-2 block text-xs font-semibold text-gold">Campeón</span>
+            <div className="grid grid-cols-2 gap-2">
+              {equiposCuartos.map((equipo) => {
+                const activo = campeon === equipo;
+                return (
+                  <button
+                    key={equipo}
+                    type="button"
+                    disabled={limiteCampeonPasado}
+                    onClick={() => elegirCampeon(equipo)}
+                    className={
+                      "flex items-center justify-between rounded-lg border px-3 py-2 text-left text-sm font-semibold transition disabled:opacity-50 " +
+                      (activo
+                        ? "border-gold bg-gold/10 text-gold"
+                        : "border-surface-border text-slate-200 hover:border-slate-500")
+                    }
+                  >
+                    <span className="flex items-center gap-1.5">
+                      <FlagIcon equipo={equipo} size={18} />
+                      {equipo}
+                    </span>
+                    {activo && <span>✅</span>}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          <div>
+            <span className="mb-2 block text-xs font-semibold text-slate-300">Subcampeón</span>
+            <div className="grid grid-cols-2 gap-2">
+              {equiposCuartos.map((equipo) => {
+                const activo = subcampeon === equipo;
+                return (
+                  <button
+                    key={equipo}
+                    type="button"
+                    disabled={limiteCampeonPasado}
+                    onClick={() => elegirSubcampeon(equipo)}
+                    className={
+                      "flex items-center justify-between rounded-lg border px-3 py-2 text-left text-sm font-semibold transition disabled:opacity-50 " +
+                      (activo
+                        ? "border-navy-400 bg-navy-500/20 text-navy-200"
+                        : "border-surface-border text-slate-200 hover:border-slate-500")
+                    }
+                  >
+                    <span className="flex items-center gap-1.5">
+                      <FlagIcon equipo={equipo} size={18} />
+                      {equipo}
+                    </span>
+                    {activo && <span>✅</span>}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      </div>
+
       {hayAlgunPick && (
         <div className="card p-5 border border-gold/30">
           <h3 className="mb-3 text-sm font-bold uppercase tracking-wider text-gold">📋 Resumen de tu predicción</h3>
@@ -328,9 +421,7 @@ export default function PrediccionForm({ partidos, predicciones }: PrediccionFor
                   {campeon}
                 </span>
               ) : (
-                <span className="text-sm text-slate-500 italic">
-                  Aún no elegido — elige el ganador de la Gran Final más abajo
-                </span>
+                <span className="text-sm text-slate-500 italic">Aún no elegido — elígelo arriba</span>
               )}
             </div>
             <div className="rounded-lg border border-surface-border bg-white/5 px-4 py-3">
@@ -341,7 +432,7 @@ export default function PrediccionForm({ partidos, predicciones }: PrediccionFor
                   {subcampeon}
                 </span>
               ) : (
-                <span className="text-sm text-slate-500 italic">Se define junto con el campeón (el otro finalista)</span>
+                <span className="text-sm text-slate-500 italic">Aún no elegido — elígelo arriba</span>
               )}
             </div>
           </div>
@@ -397,13 +488,9 @@ export default function PrediccionForm({ partidos, predicciones }: PrediccionFor
 
       <div>
         <h2 className="mb-1 text-sm font-bold uppercase tracking-wider text-gold">🏆 Gran Final</h2>
-        <p className="mb-1 text-xs text-slate-500">
-          El equipo que elijas como ganador aquí es tu predicción de <strong>Campeón del Mundial</strong>; el otro
-          finalista queda automáticamente como tu <strong>Subcampeón</strong>.
-        </p>
-        <p className="mb-3 text-xs font-semibold text-red-300">
-          ⏰ Tienes hasta el 10/07/2026, 12:00 pm (hora Perú) para elegir o cambiar tu Campeón y Subcampeón. Después
-          de esa hora queda bloqueado, aunque el partido de la final sea más adelante.
+        <p className="mb-3 text-xs text-slate-500">
+          Este resultado es para el partido de la Final en sí (ganador + marcador exacto, para esos puntos). Tu
+          Campeón y Subcampeón ya los elegiste arriba, sin depender de este partido.
         </p>
         {renderSlot("final", "navy")}
       </div>

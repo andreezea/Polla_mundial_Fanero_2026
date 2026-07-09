@@ -4,6 +4,7 @@
 //   - Acierto de marcador exacto (cualquier partido): +5 (además del ganador)
 //   - Acierto de finalista (cada uno, hasta 2):        +2
 //   - Acierto del campeón:                            +10
+//   - Acierto del subcampeón:                          +6
 // =============================================================================
 
 import { Prediccion, RankingRow, Resultado, SlotId, SF_SLOTS, QF_SLOTS } from "./types";
@@ -12,6 +13,7 @@ export const PTS_GANADOR = 3;
 export const PTS_MARCADOR = 5;
 export const PTS_FINALISTA = 2;
 export const PTS_CAMPEON = 10;
+export const PTS_SUBCAMPEON = 6;
 
 const TOTAL_PARTIDOS = 7; // qf1-4, sf1-2, final
 
@@ -59,6 +61,7 @@ export interface DetallePuntaje {
   aciertosMarcador: number;
   aciertosFinalista: number;
   campeonAcertado: boolean;
+  subcampeonAcertado: boolean;
   partidosEvaluados: number;
 }
 
@@ -77,6 +80,7 @@ export function calcularPuntajeUsuario(
     aciertosMarcador: 0,
     aciertosFinalista: 0,
     campeonAcertado: false,
+    subcampeonAcertado: false,
     partidosEvaluados: 0,
   };
 
@@ -113,7 +117,7 @@ export function calcularPuntajeUsuario(
   }
 
   if (hastaEtapa >= 3) {
-    const realCampeon = resultado.picks.final?.ganador;
+    const realCampeon = resultado.picks.final?.ganador ?? null;
     // El campo campeon (elegido libremente, sin depender del bracket) manda;
     // si una predicción antigua no lo tiene, usamos el ganador de la Gran
     // Final del bracket como respaldo (compatibilidad con datos previos).
@@ -121,6 +125,21 @@ export function calcularPuntajeUsuario(
     if (realCampeon && predCampeon && realCampeon === predCampeon) {
       detalle.campeonAcertado = true;
       detalle.puntaje += PTS_CAMPEON;
+    }
+
+    // El subcampeón real es el finalista (ganador real de sf1/sf2) que NO
+    // salió campeón. Requiere que el admin ya haya cargado ambos resultados
+    // de semifinal y el de la final.
+    const realFinalistasFinal = SF_SLOTS.map((s) => resultado.picks[s]?.ganador).filter(
+      (x): x is string => Boolean(x)
+    );
+    const realSubcampeon = realCampeon
+      ? realFinalistasFinal.find((f) => f !== realCampeon) ?? null
+      : null;
+    const predSubcampeon = pred.subcampeon ?? null;
+    if (realSubcampeon && predSubcampeon && realSubcampeon === predSubcampeon) {
+      detalle.subcampeonAcertado = true;
+      detalle.puntaje += PTS_SUBCAMPEON;
     }
   }
 
@@ -138,6 +157,7 @@ export function construirRanking(predicciones: Prediccion[], resultado: Resultad
       aciertosMarcador: det.aciertosMarcador,
       aciertosFinalista: det.aciertosFinalista,
       campeonAcertado: det.campeonAcertado,
+      subcampeonAcertado: det.subcampeonAcertado,
       pctAciertos: Math.round((det.aciertosGanador / TOTAL_PARTIDOS) * 1000) / 10,
     };
   });

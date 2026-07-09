@@ -21,6 +21,7 @@ export async function GET() {
       "Marcadores Exactos": r.aciertosMarcador,
       "Finalistas Acertados": r.aciertosFinalista,
       "Campeón Acertado": r.campeonAcertado ? "Sí" : "No",
+      "Subcampeón Acertado": r.subcampeonAcertado ? "Sí" : "No",
       "% Aciertos": r.pctAciertos,
     }))
   );
@@ -30,6 +31,8 @@ export async function GET() {
       Usuario: p.usuario,
       Emoji: p.emoji ?? "",
       Fecha: p.timestamp,
+      Campeón: p.campeon ?? "",
+      Subcampeón: p.subcampeon ?? "",
       ...Object.fromEntries(
         Object.entries(p.picks).flatMap(([slot, pick]) => [
           [`${slot}_ganador`, pick?.ganador ?? ""],

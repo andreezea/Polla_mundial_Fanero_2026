@@ -335,7 +335,8 @@ export default function PrediccionForm({ partidos, predicciones }: PrediccionFor
         <h3 className="mb-1 text-sm font-bold uppercase tracking-wider text-gold">🏆 Campeón y Subcampeón del Mundial</h3>
         <p className="mb-1 text-xs text-slate-500">
           Elige directamente quién crees que será el Campeón y el Subcampeón — no necesitas completar cuartos ni
-          semifinales primero.
+          semifinales primero. Acertar el Campeón suma <strong>+10 puntos</strong> y acertar el Subcampeón suma{" "}
+          <strong>+6 puntos</strong>.
         </p>
         <p className="mb-3 text-xs font-semibold text-red-300">
           ⏰ Tienes hasta el 10/07/2026, 12:00 pm (hora Perú) para elegir o cambiar esta predicción.

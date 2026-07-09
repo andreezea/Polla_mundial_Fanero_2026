@@ -44,6 +44,7 @@ export default function RankingTable({ ranking, mostrarFiltro = true }: RankingT
               <th className="table-header">Marcadores</th>
               <th className="table-header">Finalistas</th>
               <th className="table-header">Campeón</th>
+              <th className="table-header">Subcampeón</th>
               <th className="table-header">% Aciertos</th>
             </tr>
           </thead>
@@ -64,6 +65,7 @@ export default function RankingTable({ ranking, mostrarFiltro = true }: RankingT
                 <td className="table-cell">{r.aciertosMarcador}</td>
                 <td className="table-cell">{r.aciertosFinalista}</td>
                 <td className="table-cell">{r.campeonAcertado ? "🏆 Sí" : "—"}</td>
+                <td className="table-cell">{r.subcampeonAcertado ? "🥈 Sí" : "—"}</td>
                 <td className="table-cell">
                   <div className="flex items-center gap-2">
                     <div className="h-2 w-24 rounded-full bg-navy-800 overflow-hidden">
@@ -79,7 +81,7 @@ export default function RankingTable({ ranking, mostrarFiltro = true }: RankingT
             ))}
             {filas.length === 0 && (
               <tr>
-                <td colSpan={8} className="table-cell text-center text-slate-500 py-8">
+                <td colSpan={9} className="table-cell text-center text-slate-500 py-8">
                   No hay predicciones registradas todavía.
                 </td>
               </tr>

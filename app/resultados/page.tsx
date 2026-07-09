@@ -13,7 +13,9 @@ export default async function ResultadosPage() {
         <h1 className="section-title">Cargar Resultados Oficiales</h1>
         <p className="mt-2 text-sm text-slate-400">
           Sección administrativa: aquí se ingresan los resultados reales del torneo. La app compara automáticamente
-          cada predicción contra estos resultados para calcular el ranking.
+          cada predicción contra estos resultados para calcular el ranking. Ingresa el marcador de los 90 minutos
+          (tiempo regular) y como ganador marca al equipo que clasificó a la siguiente ronda, sin importar si fue
+          en los 90 minutos, tiempo extra o penales.
         </p>
       </div>
       <ResultadosForm partidos={partidos} resultadoInicial={resultado} />

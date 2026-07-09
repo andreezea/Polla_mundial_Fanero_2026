@@ -54,7 +54,10 @@ export default async function DashboardPage() {
           )}
 
           <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
-            <div className="lg:col-span-3 card p-5">
+            <div className="lg:col-span-3">
+              <RankingTable ranking={ranking} mostrarFiltro />
+            </div>
+            <div className="lg:col-span-2 card p-5">
               <h2 className="mb-4 text-sm font-semibold uppercase tracking-wider text-slate-300">
                 Top 5 Jugadores
               </h2>
@@ -64,9 +67,6 @@ export default async function DashboardPage() {
                   .map((r) => ({ usuario: `${r.emoji ? r.emoji + " " : ""}${r.usuario}`, puntaje: r.puntajeTotal }))
                   .reverse()}
               />
-            </div>
-            <div className="lg:col-span-2">
-              <RankingTable ranking={ranking} mostrarFiltro />
             </div>
           </div>
         </>

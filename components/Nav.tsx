@@ -2,16 +2,16 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, ClipboardList, ShieldCheck, Trophy, BarChart3, Database } from "lucide-react";
+import { LayoutDashboard, ClipboardList, ShieldCheck, Trophy, BarChart3, Database, Lock } from "lucide-react";
 import clsx from "clsx";
 
 const LINKS = [
   { href: "/", label: "Dashboard", icon: LayoutDashboard },
   { href: "/predicciones", label: "Registrar Predicción", icon: ClipboardList },
-  { href: "/resultados", label: "Resultados Reales", icon: ShieldCheck },
+  { href: "/resultados", label: "Resultados Reales", icon: ShieldCheck, admin: true },
   { href: "/ranking", label: "Ranking", icon: Trophy },
   { href: "/visualizaciones", label: "Visualizaciones", icon: BarChart3 },
-  { href: "/api/export", label: "Exportar Excel", icon: Database, external: true },
+  { href: "/api/export", label: "Exportar Excel", icon: Database, external: true, admin: true },
 ];
 
 export default function Nav() {
@@ -29,13 +29,14 @@ export default function Nav() {
           </Link>
 
           <div className="flex items-center gap-1 overflow-x-auto scrollbar-none">
-            {LINKS.map(({ href, label, icon: Icon, external }) => {
+            {LINKS.map(({ href, label, icon: Icon, external, admin }) => {
               const active = !external && (href === "/" ? pathname === "/" : pathname.startsWith(href));
               return (
                 <Link
                   key={href}
                   href={href}
                   target={external ? "_blank" : undefined}
+                  title={admin ? "Solo administrador (pide usuario y contraseña)" : undefined}
                   className={clsx(
                     "flex items-center gap-1.5 whitespace-nowrap rounded-lg px-3 py-2 text-sm font-medium transition-colors",
                     active
@@ -45,6 +46,7 @@ export default function Nav() {
                 >
                   <Icon size={16} />
                   <span className="hidden md:inline">{label}</span>
+                  {admin && <Lock size={12} className="text-slate-500" />}
                 </Link>
               );
             })}

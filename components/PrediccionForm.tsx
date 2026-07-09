@@ -6,7 +6,7 @@ import { Partido, PicksMap, Prediccion, SlotId, SLOT_IDS, EMOJIS_SUGERIDOS } fro
 import { equiposDeSlot } from "@/lib/bracket";
 import { estaBloqueado } from "@/lib/lock";
 import MatchCard from "@/components/MatchCard";
-import { Save, Upload, Loader2, Info } from "lucide-react";
+import { Save, Upload, Loader2, Info, Search } from "lucide-react";
 
 const TITULOS: Record<SlotId, string> = {
   qf1: "Cuartos de Final · Partido 1",
@@ -43,6 +43,20 @@ export default function PrediccionForm({ partidos, predicciones }: PrediccionFor
     return predicciones.find((p) => p.usuario.trim().toLowerCase() === normalizado);
   }
 
+  function cargarPrediccion(encontrada: Prediccion) {
+    setPicks(encontrada.picks ?? {});
+    setEmoji(encontrada.emoji ?? null);
+    const faltan = SLOT_IDS.filter((s) => !encontrada.picks[s]?.ganador).length;
+    setMensaje({
+      tipo: "info",
+      texto:
+        faltan > 0
+          ? `📋 Cargamos tu predicción guardada. Te faltan ${faltan} partido(s) por completar.`
+          : "📋 Cargamos tu predicción guardada. Puedes revisarla y modificarla si quieres.",
+    });
+    setYaExisteOtro(false);
+  }
+
   function alSalirDelNombre() {
     const encontrada = buscarPrediccionExistente(nombre);
     if (!encontrada) {
@@ -52,21 +66,30 @@ export default function PrediccionForm({ partidos, predicciones }: PrediccionFor
     const formularioVacio = Object.keys(picks).length === 0 && !emoji;
     if (formularioVacio) {
       // Primera vez que escribe este nombre en esta visita: cargamos su avance guardado.
-      setPicks(encontrada.picks ?? {});
-      setEmoji(encontrada.emoji ?? null);
-      const faltan = SLOT_IDS.filter((s) => !encontrada.picks[s]?.ganador).length;
-      setMensaje({
-        tipo: "info",
-        texto:
-          faltan > 0
-            ? `📋 Cargamos tu predicción guardada. Te faltan ${faltan} partido(s) por completar.`
-            : "📋 Cargamos tu predicción guardada. Ya la tienes completa — puedes modificarla si quieres.",
-      });
-      setYaExisteOtro(false);
+      cargarPrediccion(encontrada);
     } else {
       // Ya había algo escrito en el formulario: no lo pisamos, solo avisamos.
       setYaExisteOtro(true);
     }
+  }
+
+  function buscarManualmente() {
+    setMensaje(null);
+    if (!nombre.trim()) {
+      setMensaje({ tipo: "error", texto: "Escribe tu nombre para buscar tu predicción." });
+      return;
+    }
+    const encontrada = buscarPrediccionExistente(nombre);
+    if (!encontrada) {
+      setMensaje({
+        tipo: "error",
+        texto: `No encontramos ninguna predicción guardada con el nombre "${nombre.trim()}". Si es tu primera vez, elige tus partidos y guarda.`,
+      });
+      setYaExisteOtro(false);
+      return;
+    }
+    // Búsqueda explícita: siempre carga lo guardado, aunque haya algo escrito en el formulario.
+    cargarPrediccion(encontrada);
   }
 
   function actualizarPick(slot: SlotId, pick: PicksMap[SlotId]) {
@@ -193,13 +216,29 @@ export default function PrediccionForm({ partidos, predicciones }: PrediccionFor
     <div className="flex flex-col gap-6">
       <div className="card p-5">
         <label className="mb-2 block text-sm font-semibold text-slate-300">👤 Tu nombre o apodo</label>
-        <input
-          value={nombre}
-          onChange={(e) => setNombre(e.target.value)}
-          onBlur={alSalirDelNombre}
-          placeholder="Ej: Andree"
-          className="input-field max-w-sm"
-        />
+        <div className="flex flex-wrap gap-2 max-w-lg">
+          <input
+            value={nombre}
+            onChange={(e) => setNombre(e.target.value)}
+            onBlur={alSalirDelNombre}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                e.preventDefault();
+                buscarManualmente();
+              }
+            }}
+            placeholder="Ej: Andree"
+            className="input-field flex-1 min-w-[180px]"
+          />
+          <button type="button" onClick={buscarManualmente} className="btn-secondary shrink-0">
+            <Search size={16} />
+            Ver / editar mi predicción
+          </button>
+        </div>
+        <p className="mt-1.5 text-xs text-slate-500">
+          ¿Ya te registraste? Escribe tu nombre exactamente igual y dale "Ver / editar mi predicción" para
+          revisar y cambiar lo que elegiste.
+        </p>
         {yaExisteOtro && (
           <p className="mt-2 flex items-center gap-1.5 text-xs text-gold">
             <Info size={14} />

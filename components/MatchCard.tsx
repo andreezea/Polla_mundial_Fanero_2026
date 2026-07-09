@@ -90,7 +90,7 @@ export default function MatchCard({
           })}
 
           <div className="flex items-center gap-2 sm:col-span-2 mt-1">
-            <span className="text-xs text-slate-400 w-32 truncate">Marcador (opcional):</span>
+            <span className="text-xs text-slate-400 w-32 truncate">Marcador:</span>
             <input
               type="number"
               min={0}

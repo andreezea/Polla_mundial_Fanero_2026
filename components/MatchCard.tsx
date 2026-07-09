@@ -63,13 +63,17 @@ export default function MatchCard({
               <button
                 key={equipo}
                 type="button"
+                title={activo ? "Click de nuevo para quitar esta selección" : undefined}
                 disabled={inputsDeshabilitados}
                 onClick={() =>
-                  onChange({
-                    ganador: equipo,
-                    golesLocal: pick.golesLocal,
-                    golesVisitante: pick.golesVisitante,
-                  })
+                  activo
+                    ? // Ya estaba elegido este equipo: un segundo clic lo deselecciona.
+                      onChange({ ganador: null, golesLocal: pick.golesLocal, golesVisitante: pick.golesVisitante })
+                    : onChange({
+                        ganador: equipo,
+                        golesLocal: pick.golesLocal,
+                        golesVisitante: pick.golesVisitante,
+                      })
                 }
                 className={clsx(
                   "flex items-center justify-between rounded-lg border px-4 py-3 text-left font-semibold transition",

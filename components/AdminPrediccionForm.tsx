@@ -1,11 +1,12 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import { Partido, PicksMap, Prediccion, SlotId, EMOJIS_SUGERIDOS } from "@/lib/types";
 import { equiposDeSlot } from "@/lib/bracket";
 import MatchCard from "@/components/MatchCard";
 import FlagIcon from "@/components/FlagIcon";
-import { Save, Loader2, Info, UserCog } from "lucide-react";
+import { Save, Loader2, Info, UserCog, Trash2 } from "lucide-react";
 
 const TITULOS: Record<SlotId, string> = {
   qf1: "Cuartos de Final · Partido 1",
@@ -23,13 +24,22 @@ interface AdminPrediccionFormProps {
 }
 
 export default function AdminPrediccionForm({ partidos, predicciones }: AdminPrediccionFormProps) {
+  const router = useRouter();
+  const [listaPredicciones, setListaPredicciones] = useState(predicciones);
   const [usuarioSeleccionado, setUsuarioSeleccionado] = useState("");
   const [emoji, setEmoji] = useState<string | null>(null);
   const [picks, setPicks] = useState<PicksMap>({});
   const [campeon, setCampeon] = useState<string | null>(null);
   const [subcampeon, setSubcampeon] = useState<string | null>(null);
   const [guardando, setGuardando] = useState(false);
+  const [eliminando, setEliminando] = useState(false);
   const [mensaje, setMensaje] = useState<{ tipo: "ok" | "error"; texto: string } | null>(null);
+
+  // Si el servidor entrega una lista nueva de predicciones (ej. después de
+  // router.refresh()), sincronizamos nuestra copia local.
+  useEffect(() => {
+    setListaPredicciones(predicciones);
+  }, [predicciones]);
 
   const partidoPorId = useMemo(() => {
     const map: Record<string, Partido> = {};
@@ -49,14 +59,14 @@ export default function AdminPrediccionForm({ partidos, predicciones }: AdminPre
   }, [partidos]);
 
   const predicionesOrdenadas = useMemo(
-    () => [...predicciones].sort((a, b) => a.usuario.localeCompare(b.usuario, "es")),
-    [predicciones]
+    () => [...listaPredicciones].sort((a, b) => a.usuario.localeCompare(b.usuario, "es")),
+    [listaPredicciones]
   );
 
   function seleccionarUsuario(nombre: string) {
     setUsuarioSeleccionado(nombre);
     setMensaje(null);
-    const encontrada = predicciones.find((p) => p.usuario === nombre);
+    const encontrada = listaPredicciones.find((p) => p.usuario === nombre);
     if (encontrada) {
       setPicks(encontrada.picks ?? {});
       setEmoji(encontrada.emoji ?? null);
@@ -113,10 +123,44 @@ export default function AdminPrediccionForm({ partidos, predicciones }: AdminPre
       });
       if (!res.ok) throw new Error("Error al guardar");
       setMensaje({ tipo: "ok", texto: `✅ Predicción de ${usuarioSeleccionado} actualizada correctamente.` });
+      setListaPredicciones((prev) => {
+        const otras = prev.filter((p) => p.usuario !== usuarioSeleccionado);
+        return [...otras, { usuario: usuarioSeleccionado, emoji, timestamp: new Date().toISOString(), picks, campeon, subcampeon }];
+      });
+      router.refresh();
     } catch {
       setMensaje({ tipo: "error", texto: "No se pudo guardar. Intenta nuevamente." });
     } finally {
       setGuardando(false);
+    }
+  }
+
+  async function eliminarParticipante() {
+    if (!usuarioSeleccionado) return;
+    const confirmado = window.confirm(
+      `¿Seguro que quieres eliminar por completo la predicción de "${usuarioSeleccionado}"? Esta acción no se puede deshacer.`
+    );
+    if (!confirmado) return;
+
+    setEliminando(true);
+    setMensaje(null);
+    try {
+      const res = await fetch(`/api/admin/predicciones?usuario=${encodeURIComponent(usuarioSeleccionado)}`, {
+        method: "DELETE",
+      });
+      if (!res.ok) throw new Error("Error al eliminar");
+      setMensaje({ tipo: "ok", texto: `🗑️ Se eliminó la predicción de ${usuarioSeleccionado}.` });
+      setListaPredicciones((prev) => prev.filter((p) => p.usuario !== usuarioSeleccionado));
+      setUsuarioSeleccionado("");
+      setPicks({});
+      setEmoji(null);
+      setCampeon(null);
+      setSubcampeon(null);
+      router.refresh();
+    } catch {
+      setMensaje({ tipo: "error", texto: "No se pudo eliminar. Intenta nuevamente." });
+    } finally {
+      setEliminando(false);
     }
   }
 
@@ -161,6 +205,18 @@ export default function AdminPrediccionForm({ partidos, predicciones }: AdminPre
         </select>
         {predicionesOrdenadas.length === 0 && (
           <p className="mt-2 text-xs text-slate-500">Todavía no hay participantes registrados.</p>
+        )}
+
+        {usuarioSeleccionado && (
+          <button
+            type="button"
+            onClick={eliminarParticipante}
+            disabled={eliminando}
+            className="btn-secondary mt-3 border-red-500/40 text-red-300 hover:bg-red-500/10"
+          >
+            {eliminando ? <Loader2 className="animate-spin" size={16} /> : <Trash2 size={16} />}
+            Eliminar predicción de {usuarioSeleccionado}
+          </button>
         )}
       </div>
 

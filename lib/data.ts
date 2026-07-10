@@ -91,6 +91,20 @@ export async function upsertPrediccion(pred: Prediccion): Promise<Prediccion[]> 
   return nuevas;
 }
 
+/**
+ * Elimina por completo la predicción de un participante (ej. registros
+ * duplicados por error). Solo se llama desde la ruta de administrador
+ * /api/admin/predicciones, protegida con usuario y contraseña.
+ */
+export async function eliminarPrediccion(usuario: string): Promise<Prediccion[]> {
+  const actuales = await getPredicciones();
+  const nombreNormalizado = usuario.trim().toLowerCase();
+  const filtradas = actuales.filter((p) => p.usuario.trim().toLowerCase() !== nombreNormalizado);
+  if (redis) await redis.set(KEY_PREDICCIONES, filtradas);
+  else writeJSONFallback("predicciones.json", filtradas);
+  return filtradas;
+}
+
 export async function importarPredicciones(nuevas: Prediccion[]): Promise<Prediccion[]> {
   const actuales = await getPredicciones();
   const nombresNuevos = new Set(nuevas.map((p) => p.usuario.trim().toLowerCase()));

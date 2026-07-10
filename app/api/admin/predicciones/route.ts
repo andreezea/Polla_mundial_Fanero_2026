@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getPredicciones, upsertPrediccion } from "@/lib/data";
+import { getPredicciones, upsertPrediccion, eliminarPrediccion } from "@/lib/data";
 import { Prediccion } from "@/lib/types";
 
 // =============================================================================
@@ -26,5 +26,17 @@ export async function POST(request: Request) {
 
   pred.timestamp = new Date().toISOString();
   const nuevas = await upsertPrediccion(pred);
+  return NextResponse.json(nuevas);
+}
+
+export async function DELETE(request: Request) {
+  const { searchParams } = new URL(request.url);
+  const usuario = searchParams.get("usuario");
+
+  if (!usuario || !usuario.trim()) {
+    return NextResponse.json({ error: "Falta el nombre del participante a eliminar." }, { status: 400 });
+  }
+
+  const nuevas = await eliminarPrediccion(usuario);
   return NextResponse.json(nuevas);
 }

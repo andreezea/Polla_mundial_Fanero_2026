@@ -17,6 +17,8 @@ interface MatchCardProps {
   bloqueado?: boolean;
   /** Mensaje personalizado para el aviso de bloqueo (opcional). */
   mensajeBloqueo?: string;
+  /** Mensaje personalizado cuando los equipos aún no están definidos (opcional). */
+  mensajeIndefinido?: string;
   colorAcento?: "gold" | "navy";
 }
 
@@ -31,6 +33,7 @@ export default function MatchCard({
   deshabilitado = false,
   bloqueado = false,
   mensajeBloqueo,
+  mensajeIndefinido,
   colorAcento = "gold",
 }: MatchCardProps) {
   const equiposDefinidos = equipo1 !== "Por definir" && equipo2 !== "Por definir";
@@ -56,7 +59,7 @@ export default function MatchCard({
 
       {!seleccionable ? (
         <p className="text-sm text-slate-500 italic">
-          Se define automáticamente cuando completes las etapas anteriores.
+          {mensajeIndefinido ?? "Se define automáticamente cuando completes las etapas anteriores."}
         </p>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">

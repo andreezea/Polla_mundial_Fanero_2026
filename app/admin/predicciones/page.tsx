@@ -1,4 +1,4 @@
-import { getPartidos, getPredicciones } from "@/lib/data";
+import { getPartidos, getPredicciones, getResultado } from "@/lib/data";
 import AdminPrediccionForm from "@/components/AdminPrediccionForm";
 
 export const dynamic = "force-dynamic";
@@ -6,6 +6,7 @@ export const dynamic = "force-dynamic";
 export default async function AdminPrediccionesPage() {
   const partidos = getPartidos();
   const predicciones = await getPredicciones();
+  const resultado = await getResultado();
 
   return (
     <div className="flex flex-col gap-4">
@@ -17,7 +18,7 @@ export default async function AdminPrediccionesPage() {
           instrucciones.
         </p>
       </div>
-      <AdminPrediccionForm partidos={partidos} predicciones={predicciones} />
+      <AdminPrediccionForm partidos={partidos} predicciones={predicciones} resultado={resultado} />
     </div>
   );
 }

@@ -1,4 +1,4 @@
-import { getPartidos, getPredicciones } from "@/lib/data";
+import { getPartidos, getPredicciones, getResultado } from "@/lib/data";
 import PrediccionForm from "@/components/PrediccionForm";
 
 export const dynamic = "force-dynamic";
@@ -6,6 +6,7 @@ export const dynamic = "force-dynamic";
 export default async function PrediccionesPage() {
   const partidos = getPartidos();
   const predicciones = await getPredicciones();
+  const resultado = await getResultado();
 
   return (
     <div className="flex flex-col gap-4">
@@ -19,7 +20,7 @@ export default async function PrediccionesPage() {
           la siguiente ronda, sin importar si fue en los 90 minutos, tiempo extra o penales.
         </p>
       </div>
-      <PrediccionForm partidos={partidos} predicciones={predicciones} />
+      <PrediccionForm partidos={partidos} predicciones={predicciones} resultado={resultado} />
     </div>
   );
 }

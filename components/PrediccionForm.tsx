@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import * as XLSX from "xlsx";
-import { Partido, PicksMap, Prediccion, SlotId, SLOT_IDS, EMOJIS_SUGERIDOS } from "@/lib/types";
+import { Partido, PicksMap, Prediccion, Resultado, SlotId, SLOT_IDS, EMOJIS_SUGERIDOS } from "@/lib/types";
 import { equiposDeSlot } from "@/lib/bracket";
 import { estaBloqueado, haPasadoLimiteCampeon } from "@/lib/lock";
 import MatchCard from "@/components/MatchCard";
@@ -22,9 +22,10 @@ const TITULOS: Record<SlotId, string> = {
 interface PrediccionFormProps {
   partidos: Partido[];
   predicciones: Prediccion[];
+  resultado: Resultado;
 }
 
-export default function PrediccionForm({ partidos, predicciones }: PrediccionFormProps) {
+export default function PrediccionForm({ partidos, predicciones, resultado }: PrediccionFormProps) {
   const [nombre, setNombre] = useState("");
   const [emoji, setEmoji] = useState<string | null>(null);
   const [picks, setPicks] = useState<PicksMap>({});
@@ -129,15 +130,11 @@ export default function PrediccionForm({ partidos, predicciones }: PrediccionFor
   }
 
   function actualizarPick(slot: SlotId, pick: PicksMap[SlotId]) {
-    setPicks((prev) => {
-      const next = { ...prev, [slot]: pick };
-      // Si cambia el ganador de un partido, limpiamos las etapas siguientes
-      // que dependían de él para evitar inconsistencias.
-      if (slot === "qf1" || slot === "qf2") delete next.sf1;
-      if (slot === "qf3" || slot === "qf4") delete next.sf2;
-      if (slot === "sf1" || slot === "sf2") delete next.final;
-      return next;
-    });
+    // Los equipos de Semifinal y Final se calculan a partir de los
+    // resultados reales (no de los picks propios de cuartos), así que ya no
+    // hace falta limpiar etapas siguientes al cambiar un pick: los equipos
+    // que se muestran ahí no dependen de esta elección.
+    setPicks((prev) => ({ ...prev, [slot]: pick }));
   }
 
   async function guardar() {
@@ -243,7 +240,11 @@ export default function PrediccionForm({ partidos, predicciones }: PrediccionFor
   const hayAlgunPick = SLOT_IDS.some((s) => picks[s]?.ganador) || !!campeon || !!subcampeon;
 
   function renderSlot(slot: SlotId, colorAcento: "gold" | "navy" = "gold") {
-    const [e1, e2] = equiposDeSlot(slot, partidos, picks);
+    // Los equipos siempre se resuelven contra los resultados oficiales
+    // (resultado.picks). Para Cuartos no cambia nada (son fijos), pero para
+    // Semifinal y Final ya NO se usan los picks propios del participante:
+    // solo aparecen los equipos que realmente clasificaron en la vida real.
+    const [e1, e2] = equiposDeSlot(slot, partidos, resultado.picks);
     const partido = partidoPorId[slot];
     return (
       <MatchCard
@@ -256,6 +257,7 @@ export default function PrediccionForm({ partidos, predicciones }: PrediccionFor
         pick={picks[slot] ?? { ganador: null, golesLocal: null, golesVisitante: null }}
         onChange={(p) => actualizarPick(slot, p)}
         bloqueado={estaBloqueado(partido)}
+        mensajeIndefinido="⏳ Aún no disponible: falta que el administrador registre los resultados reales de la ronda anterior."
         colorAcento={colorAcento}
       />
     );
@@ -481,7 +483,12 @@ export default function PrediccionForm({ partidos, predicciones }: PrediccionFor
       </div>
 
       <div>
-        <h2 className="mb-3 text-sm font-bold uppercase tracking-wider text-gold">🥈 Semifinales</h2>
+        <h2 className="mb-1 text-sm font-bold uppercase tracking-wider text-gold">🥈 Semifinales</h2>
+        <p className="mb-3 text-xs text-slate-500">
+          Aquí solo aparecen los equipos que realmente clasificaron a semifinal (según los resultados oficiales
+          que carga el administrador) — no tus propios picks de cuartos. Elige el ganador y el marcador de cada
+          semifinal real.
+        </p>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {(["sf1", "sf2"] as SlotId[]).map((s) => renderSlot(s))}
         </div>
@@ -490,8 +497,9 @@ export default function PrediccionForm({ partidos, predicciones }: PrediccionFor
       <div>
         <h2 className="mb-1 text-sm font-bold uppercase tracking-wider text-gold">🏆 Gran Final</h2>
         <p className="mb-3 text-xs text-slate-500">
-          Este resultado es para el partido de la Final en sí (ganador + marcador exacto, para esos puntos). Tu
-          Campeón y Subcampeón ya los elegiste arriba, sin depender de este partido.
+          Igual que en semifinales, aquí verás a los dos finalistas reales una vez que el administrador registre
+          los resultados de semifinal. Este resultado es para el partido de la Final en sí (ganador + marcador
+          exacto). Tu Campeón y Subcampeón ya los elegiste arriba, sin depender de este partido.
         </p>
         {renderSlot("final", "navy")}
       </div>

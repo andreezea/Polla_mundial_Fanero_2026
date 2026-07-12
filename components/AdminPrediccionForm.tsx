@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Partido, PicksMap, Prediccion, SlotId, EMOJIS_SUGERIDOS } from "@/lib/types";
+import { Partido, PicksMap, Prediccion, Resultado, SlotId, EMOJIS_SUGERIDOS } from "@/lib/types";
 import { equiposDeSlot } from "@/lib/bracket";
 import MatchCard from "@/components/MatchCard";
 import FlagIcon from "@/components/FlagIcon";
@@ -21,9 +21,10 @@ const TITULOS: Record<SlotId, string> = {
 interface AdminPrediccionFormProps {
   partidos: Partido[];
   predicciones: Prediccion[];
+  resultado: Resultado;
 }
 
-export default function AdminPrediccionForm({ partidos, predicciones }: AdminPrediccionFormProps) {
+export default function AdminPrediccionForm({ partidos, predicciones, resultado }: AdminPrediccionFormProps) {
   const router = useRouter();
   const [listaPredicciones, setListaPredicciones] = useState(predicciones);
   const [usuarioSeleccionado, setUsuarioSeleccionado] = useState("");
@@ -81,13 +82,9 @@ export default function AdminPrediccionForm({ partidos, predicciones }: AdminPre
   }
 
   function actualizarPick(slot: SlotId, pick: PicksMap[SlotId]) {
-    setPicks((prev) => {
-      const next = { ...prev, [slot]: pick };
-      if (slot === "qf1" || slot === "qf2") delete next.sf1;
-      if (slot === "qf3" || slot === "qf4") delete next.sf2;
-      if (slot === "sf1" || slot === "sf2") delete next.final;
-      return next;
-    });
+    // Los equipos de Semifinal y Final salen de los resultados reales, no de
+    // los picks de cuartos, así que ya no hace falta limpiar etapas siguientes.
+    setPicks((prev) => ({ ...prev, [slot]: pick }));
   }
 
   function elegirCampeon(equipo: string) {
@@ -165,7 +162,9 @@ export default function AdminPrediccionForm({ partidos, predicciones }: AdminPre
   }
 
   function renderSlot(slot: SlotId, colorAcento: "gold" | "navy" = "gold") {
-    const [e1, e2] = equiposDeSlot(slot, partidos, picks);
+    // Igual que en el formulario público: Semifinal y Final se resuelven
+    // contra los resultados oficiales, no contra los picks del participante.
+    const [e1, e2] = equiposDeSlot(slot, partidos, resultado.picks);
     const partido = partidoPorId[slot];
     return (
       <MatchCard
@@ -178,6 +177,7 @@ export default function AdminPrediccionForm({ partidos, predicciones }: AdminPre
         pick={picks[slot] ?? { ganador: null, golesLocal: null, golesVisitante: null }}
         onChange={(p) => actualizarPick(slot, p)}
         bloqueado={false}
+        mensajeIndefinido="⏳ Falta que registres los resultados reales de la ronda anterior en 'Resultados Reales'."
         colorAcento={colorAcento}
       />
     );

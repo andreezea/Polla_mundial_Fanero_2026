@@ -55,7 +55,6 @@ export interface RankingRow {
   puntajeTotal: number;
   aciertosGanador: number;
   aciertosMarcador: number;
-  aciertosFinalista: number;
   campeonAcertado: boolean;
   subcampeonAcertado: boolean;
   pctAciertos: number;

@@ -2,7 +2,6 @@
 // Sistema de puntaje de la Polla Mundialista 2026
 //   - Acierto de ganador (cualquier partido):        +3
 //   - Acierto de marcador exacto (cualquier partido): +5 (además del ganador)
-//   - Acierto de finalista (cada uno, hasta 2):        +2
 //   - Acierto del campeón:                            +10
 //   - Acierto del subcampeón:                          +6
 // =============================================================================
@@ -11,7 +10,6 @@ import { Prediccion, RankingRow, Resultado, SlotId, SF_SLOTS, QF_SLOTS } from ".
 
 export const PTS_GANADOR = 3;
 export const PTS_MARCADOR = 5;
-export const PTS_FINALISTA = 2;
 export const PTS_CAMPEON = 10;
 export const PTS_SUBCAMPEON = 6;
 
@@ -59,7 +57,6 @@ export interface DetallePuntaje {
   puntaje: number;
   aciertosGanador: number;
   aciertosMarcador: number;
-  aciertosFinalista: number;
   campeonAcertado: boolean;
   subcampeonAcertado: boolean;
   partidosEvaluados: number;
@@ -78,7 +75,6 @@ export function calcularPuntajeUsuario(
     puntaje: 0,
     aciertosGanador: 0,
     aciertosMarcador: 0,
-    aciertosFinalista: 0,
     campeonAcertado: false,
     subcampeonAcertado: false,
     partidosEvaluados: 0,
@@ -99,21 +95,6 @@ export function calcularPuntajeUsuario(
     detalle.puntaje += puntos;
     if (aciertoGanador) detalle.aciertosGanador += 1;
     if (aciertoMarcador) detalle.aciertosMarcador += 1;
-  }
-
-  if (hastaEtapa >= 2) {
-    const realFinalistas = new Set(
-      SF_SLOTS.map((s) => resultado.picks[s]?.ganador).filter((x): x is string => Boolean(x))
-    );
-    const predFinalistas = new Set(
-      SF_SLOTS.map((s) => pred.picks[s]?.ganador).filter((x): x is string => Boolean(x))
-    );
-    let aciertos = 0;
-    predFinalistas.forEach((f) => {
-      if (realFinalistas.has(f)) aciertos += 1;
-    });
-    detalle.aciertosFinalista = realFinalistas.size > 0 ? aciertos : 0;
-    detalle.puntaje += detalle.aciertosFinalista * PTS_FINALISTA;
   }
 
   if (hastaEtapa >= 3) {
@@ -155,7 +136,6 @@ export function construirRanking(predicciones: Prediccion[], resultado: Resultad
       puntajeTotal: det.puntaje,
       aciertosGanador: det.aciertosGanador,
       aciertosMarcador: det.aciertosMarcador,
-      aciertosFinalista: det.aciertosFinalista,
       campeonAcertado: det.campeonAcertado,
       subcampeonAcertado: det.subcampeonAcertado,
       pctAciertos: Math.round((det.aciertosGanador / TOTAL_PARTIDOS) * 1000) / 10,

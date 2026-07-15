@@ -19,7 +19,6 @@ export async function GET() {
       "Puntaje Total": r.puntajeTotal,
       "Ganadores Acertados": r.aciertosGanador,
       "Marcadores Exactos": r.aciertosMarcador,
-      "Finalistas Acertados": r.aciertosFinalista,
       "Campeón Acertado": r.campeonAcertado ? "Sí" : "No",
       "Subcampeón Acertado": r.subcampeonAcertado ? "Sí" : "No",
       "% Aciertos": r.pctAciertos,
